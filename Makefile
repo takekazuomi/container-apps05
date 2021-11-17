@@ -49,6 +49,9 @@ app-create:		## create container apps
 	--resource-group $(RESOURCE_GROUP) \
 	--environment $(CONTAINERAPPS_ENVIRONMENT) \
 	--image $(IMAGE_NAME):latest \
+	--registry-login-server $(CR_NAME) \
+        --registry-username $(CR_USER) \
+        --registry-password $${CR_PAT} \
 	--target-port 8088 \
 	--ingress 'external' \
 	--query configuration.ingress.fqdn
@@ -63,13 +66,16 @@ app-update:		## update container apps
 	--resource-group $(RESOURCE_GROUP) \
 	--name my-container-app \
 	--image $(IMAGE_NAME):latest \
+	--registry-login-server $(CR_NAME) \
+        --registry-username $(CR_USER) \
+        --registry-password $${CR_PAT} \
 	-o table
 
 app-show:		## show container apps
 	az containerapp show \
 	--resource-group $(RESOURCE_GROUP) \
 	--name my-container-app \
-	-o table
+	-o json
 
 app-fqdn:		## show container apps fqdn
 	@echo $(APP_FQDN)
