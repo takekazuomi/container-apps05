@@ -27,7 +27,27 @@ make gh-login build push
 
 ## 7. deploy to azure container apps
 
-make build 
+`make setup` で、下記を行います。container appsは作らないので、別途デプロイします。
+
+- az cliへの containerapp extensionのインストール
+- github container repo(ghcr.io)へのログイン
+- container apps で使うAzure リソースの作成
+
+```sh
+make setup
+```
+
+`container apps` を作ります。初回は、`containerapps` リソースを作ります。リソースには、docker imageが必要なので、ビルド、プッシュして、リソース作成の順で実行します。
+
+```sh
+make build app-create
+```
+
+更新、コードを修正したら、新しいイメージをプッシュして、`containerapps` リソースを更新します。
+
+```sh
+make build app-update
+```
 
 ## TODO
 
