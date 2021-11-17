@@ -12,6 +12,7 @@ APP_FQDN				?= $(shell az containerapp show \
 						--name my-container-app \
 						--query configuration.ingress.fqdn \
 						-o tsv)
+TAG					= $(shell git log -1 --pretty=format:%h)
 
 help:		## Show this help.
 	@sed -ne '/@sed/!s/## //p' $(MAKEFILE_LIST)
@@ -48,7 +49,7 @@ app-create:		## create container apps
 	--name my-container-app \
 	--resource-group $(RESOURCE_GROUP) \
 	--environment $(CONTAINERAPPS_ENVIRONMENT) \
-	--image $(IMAGE_NAME):latest \
+	--image $(IMAGE_NAME):$(TAG) \
 	--registry-login-server $(CR_NAME) \
         --registry-username $(CR_USER) \
         --registry-password $${CR_PAT} \
@@ -65,7 +66,7 @@ app-update:		## update container apps
 	az containerapp update \
 	--resource-group $(RESOURCE_GROUP) \
 	--name my-container-app \
-	--image $(IMAGE_NAME):latest \
+	--image $(IMAGE_NAME):$(TAG) \
 	--registry-login-server $(CR_NAME) \
         --registry-username $(CR_USER) \
         --registry-password $${CR_PAT} \
@@ -90,5 +91,5 @@ app-delete:		## delete container apps
 	-o table
 
 build:			## build application
-	cd app; $(MAKE) CR_NAME=$(CR_NAME) CR_USER=$(CR_USER) IMAGE_NAME=$(IMAGE_NAME) build push
+	cd app; $(MAKE) CR_NAME=$(CR_NAME) CR_USER=$(CR_USER) IMAGE_NAME=$(IMAGE_NAME) TAG=$(TAG) build push
 
