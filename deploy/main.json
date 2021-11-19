@@ -1,0 +1,317 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.4.1008.15138",
+      "templateHash": "12008027125404153332"
+    }
+  },
+  "parameters": {
+    "environmentName": {
+      "type": "string"
+    },
+    "containerAppName": {
+      "type": "string"
+    },
+    "containerImage": {
+      "type": "string"
+    },
+    "containerPort": {
+      "type": "int"
+    },
+    "containerRegistry": {
+      "type": "string"
+    },
+    "containerRegistryPassword": {
+      "type": "secureString"
+    },
+    "containerRegistryUsername": {
+      "type": "string"
+    },
+    "isExternalIngress": {
+      "type": "bool",
+      "defaultValue": true
+    }
+  },
+  "functions": [],
+  "resources": [
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2020-06-01",
+      "name": "environment",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "environmentName": {
+            "value": "[parameters('environmentName')]"
+          },
+          "location": {
+            "value": "[resourceGroup().location]"
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.4.1008.15138",
+              "templateHash": "7652102194146997501"
+            }
+          },
+          "parameters": {
+            "environmentName": {
+              "type": "string"
+            },
+            "logAnalyticsWorkspaceName": {
+              "type": "string",
+              "defaultValue": "[format('logs-{0}', parameters('environmentName'))]"
+            },
+            "appInsightsName": {
+              "type": "string",
+              "defaultValue": "[format('appins-{0}', parameters('environmentName'))]"
+            },
+            "location": {
+              "type": "string",
+              "defaultValue": "[resourceGroup().location]"
+            }
+          },
+          "functions": [],
+          "resources": [
+            {
+              "type": "Microsoft.OperationalInsights/workspaces",
+              "apiVersion": "2020-03-01-preview",
+              "name": "[parameters('logAnalyticsWorkspaceName')]",
+              "location": "[parameters('location')]",
+              "properties": {
+                "retentionInDays": 30,
+                "features": {
+                  "searchVersion": 1
+                },
+                "sku": {
+                  "name": "PerGB2018"
+                }
+              }
+            },
+            {
+              "type": "Microsoft.Insights/components",
+              "apiVersion": "2020-02-02-preview",
+              "name": "[parameters('appInsightsName')]",
+              "location": "[parameters('location')]",
+              "kind": "web",
+              "properties": {
+                "Application_Type": "web",
+                "Flow_Type": "Redfield",
+                "Request_Source": "CustomDeployment"
+              }
+            },
+            {
+              "type": "Microsoft.Web/kubeEnvironments",
+              "apiVersion": "2021-02-01",
+              "name": "[parameters('environmentName')]",
+              "location": "[parameters('location')]",
+              "properties": {
+                "type": "managed",
+                "internalLoadBalancerEnabled": false,
+                "appLogsConfiguration": {
+                  "destination": "log-analytics",
+                  "logAnalyticsConfiguration": {
+                    "customerId": "[reference(resourceId('Microsoft.OperationalInsights/workspaces', parameters('logAnalyticsWorkspaceName'))).customerId]",
+                    "sharedKey": "[listKeys(resourceId('Microsoft.OperationalInsights/workspaces', parameters('logAnalyticsWorkspaceName')), '2020-03-01-preview').primarySharedKey]"
+                  }
+                },
+                "containerAppsConfiguration": {
+                  "daprAIInstrumentationKey": "[reference(resourceId('Microsoft.Insights/components', parameters('appInsightsName'))).InstrumentationKey]"
+                }
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Insights/components', parameters('appInsightsName'))]",
+                "[resourceId('Microsoft.OperationalInsights/workspaces', parameters('logAnalyticsWorkspaceName'))]"
+              ]
+            }
+          ],
+          "outputs": {
+            "location": {
+              "type": "string",
+              "value": "[parameters('location')]"
+            },
+            "environmentId": {
+              "type": "string",
+              "value": "[resourceId('Microsoft.Web/kubeEnvironments', parameters('environmentName'))]"
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2020-06-01",
+      "name": "httpApps",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "containerAppName": {
+            "value": "[parameters('containerAppName')]"
+          },
+          "containerImage": {
+            "value": "[parameters('containerImage')]"
+          },
+          "containerPort": {
+            "value": "[parameters('containerPort')]"
+          },
+          "containerRegistry": {
+            "value": "[parameters('containerRegistry')]"
+          },
+          "containerRegistryPassword": {
+            "value": "[parameters('containerRegistryPassword')]"
+          },
+          "containerRegistryUsername": {
+            "value": "[parameters('containerRegistryUsername')]"
+          },
+          "environmentId": {
+            "value": "[reference(resourceId('Microsoft.Resources/deployments', 'environment'), '2020-06-01').outputs.environmentId.value]"
+          },
+          "isExternalIngress": {
+            "value": "[parameters('isExternalIngress')]"
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.4.1008.15138",
+              "templateHash": "14326739438171267073"
+            }
+          },
+          "parameters": {
+            "containerAppName": {
+              "type": "string"
+            },
+            "location": {
+              "type": "string",
+              "defaultValue": "[resourceGroup().location]"
+            },
+            "environmentId": {
+              "type": "string"
+            },
+            "containerImage": {
+              "type": "string"
+            },
+            "containerPort": {
+              "type": "int"
+            },
+            "isExternalIngress": {
+              "type": "bool"
+            },
+            "containerRegistry": {
+              "type": "string"
+            },
+            "containerRegistryUsername": {
+              "type": "string"
+            },
+            "env": {
+              "type": "array",
+              "defaultValue": []
+            },
+            "minReplicas": {
+              "type": "int",
+              "defaultValue": 0
+            },
+            "secrets": {
+              "type": "array",
+              "defaultValue": [
+                {
+                  "name": "docker-password",
+                  "value": "[parameters('containerRegistryPassword')]"
+                }
+              ]
+            },
+            "revisionMode": {
+              "type": "string",
+              "defaultValue": "single",
+              "allowedValues": [
+                "multiple",
+                "single"
+              ]
+            },
+            "containerRegistryPassword": {
+              "type": "secureString"
+            }
+          },
+          "functions": [],
+          "variables": {
+            "cpu": "[json('0.5')]",
+            "memory": "500Mi",
+            "registrySecretRefName": "docker-password"
+          },
+          "resources": [
+            {
+              "type": "Microsoft.Web/containerApps",
+              "apiVersion": "2021-03-01",
+              "name": "[parameters('containerAppName')]",
+              "kind": "containerapp",
+              "location": "[parameters('location')]",
+              "properties": {
+                "kubeEnvironmentId": "[parameters('environmentId')]",
+                "configuration": {
+                  "activeRevisionsMode": "[parameters('revisionMode')]",
+                  "secrets": "[parameters('secrets')]",
+                  "registries": [
+                    {
+                      "server": "[parameters('containerRegistry')]",
+                      "username": "[parameters('containerRegistryUsername')]",
+                      "passwordSecretRef": "[variables('registrySecretRefName')]"
+                    }
+                  ],
+                  "ingress": {
+                    "external": "[parameters('isExternalIngress')]",
+                    "targetPort": "[parameters('containerPort')]",
+                    "transport": "auto"
+                  }
+                },
+                "template": {
+                  "containers": [
+                    {
+                      "image": "[parameters('containerImage')]",
+                      "name": "[parameters('containerAppName')]",
+                      "env": "[parameters('env')]",
+                      "resources": {
+                        "cpu": "[variables('cpu')]",
+                        "memory": "[variables('memory')]"
+                      }
+                    }
+                  ],
+                  "scale": {
+                    "minReplicas": "[parameters('minReplicas')]"
+                  },
+                  "dapr": {
+                    "enabled": false
+                  }
+                }
+              }
+            }
+          ],
+          "outputs": {
+            "fqdn": {
+              "type": "string",
+              "value": "[reference(resourceId('Microsoft.Web/containerApps', parameters('containerAppName'))).configuration.ingress.fqdn]"
+            }
+          }
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Resources/deployments', 'environment')]"
+      ]
+    }
+  ]
+}
