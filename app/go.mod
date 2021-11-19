@@ -1,4 +1,4 @@
-module takekazu.omi/golang-gin01
+module takekazu.omi/container-apps05/app
 
 go 1.17
 
