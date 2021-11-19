@@ -72,6 +72,18 @@ app-update:		## update container apps
         --registry-password $${CR_PAT} \
 	-o table
 
+app-updates:		## update container apps
+	az containerapp update \
+	--resource-group $(RESOURCE_GROUP) \
+	--name my-container-app \
+	--image $(IMAGE_NAME):$(TAG) \
+	--registry-login-server $(CR_NAME) \
+        --registry-username $(CR_USER) \
+        --registry-password $${CR_PAT} \
+	--scale-rules scale-rules \
+	-o table
+
+
 app-show:		## show container apps
 	az containerapp show \
 	--resource-group $(RESOURCE_GROUP) \
