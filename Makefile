@@ -1,24 +1,24 @@
-RESOURCE_GROUP				= omi01-rg
+RESOURCE_GROUP				= omi02-rg
 LOCATION				= canadacentral
 LOG_ANALYTICS_WORKSPACE			= containerapps-logs
-CONTAINERAPPS_ENVIRONMENT		= containerapps-env
-LOG_ANALYTICS_WORKSPACE_CLIENT_ID	?= $(shell az monitor log-analytics workspace show --query customerId -g $(RESOURCE_GROUP) -n $(LOG_ANALYTICS_WORKSPACE) --out tsv)
-LOG_ANALYTICS_WORKSPACE_CLIENT_SECRET	?= $(shell az monitor log-analytics workspace get-shared-keys --query primarySharedKey -g $(RESOURCE_GROUP) -n $(LOG_ANALYTICS_WORKSPACE) --out tsv)
+CONTAINERAPPS_ENVIRONMENT		= containerapps-env02
+CONTAINERAPPS_NAME			= my-containerapps
 CR_NAME					?= ghcr.io
 CR_USER					?= takekazuomi
 IMAGE_NAME				?= $(CR_NAME)/$(CR_USER)/container-apps05
 APP_FQDN				?= $(shell az containerapp show \
 						--resource-group $(RESOURCE_GROUP) \
-						--name my-container-app \
+						--name $(CONTAINERAPPS_NAME) \
 						--query configuration.ingress.fqdn \
 						-o tsv)
 TAG					= $(shell git log -1 --pretty=format:%h)
+MIN_REPLICAS				= 0
 
 help:		## Show this help.
 	@sed -ne '/@sed/!s/## //p' $(MAKEFILE_LIST)
 
 setup: 			## initial setup. only for first time
-setup: setup-azcli create-rg create-la create-env
+setup: setup-azcli
 	cd app; $(MAKE) ghcr-login
 
 setup-azcli:
@@ -31,64 +31,23 @@ create-rg:		## create resouce group
 	--name $(RESOURCE_GROUP) \
 	--location "$(LOCATION)"
 
-create-la:		## create log analytics
-	az monitor log-analytics workspace create \
-	--resource-group $(RESOURCE_GROUP) \
-	--workspace-name $(LOG_ANALYTICS_WORKSPACE)
-
-create-env:		## create containerapp environmnet
-	az containerapp env create \
-	--name $(CONTAINERAPPS_ENVIRONMENT) \
-	--resource-group $(RESOURCE_GROUP) \
-	--logs-workspace-id $(LOG_ANALYTICS_WORKSPACE_CLIENT_ID) \
-	--logs-workspace-key $(LOG_ANALYTICS_WORKSPACE_CLIENT_SECRET) \
-	--location "$(LOCATION)"
-
-app-create:		## create container apps
-	az containerapp create \
-	--name my-container-app \
-	--resource-group $(RESOURCE_GROUP) \
-	--environment $(CONTAINERAPPS_ENVIRONMENT) \
-	--image $(IMAGE_NAME):$(TAG) \
-	--registry-login-server $(CR_NAME) \
-        --registry-username $(CR_USER) \
-        --registry-password $${CR_PAT} \
-	--target-port 8088 \
-	--ingress 'external' \
-	--query configuration.ingress.fqdn
-
 app-list:		## list container apps
 	az containerapp list \
 	--resource-group $(RESOURCE_GROUP) \
 	-o table
 
-app-update:		## update container apps
-	az containerapp update \
-	--resource-group $(RESOURCE_GROUP) \
-	--name my-container-app \
-	--image $(IMAGE_NAME):$(TAG) \
-	--registry-login-server $(CR_NAME) \
-        --registry-username $(CR_USER) \
-        --registry-password $${CR_PAT} \
-	-o table
-
-app-updates:		## update container apps
-	az containerapp update \
-	--resource-group $(RESOURCE_GROUP) \
-	--name my-container-app \
-	--image $(IMAGE_NAME):$(TAG) \
-	--registry-login-server $(CR_NAME) \
-        --registry-username $(CR_USER) \
-        --registry-password $${CR_PAT} \
-	--scale-rules scale-rules \
-	-o table
-
-
 app-show:		## show container apps
 	az containerapp show \
 	--resource-group $(RESOURCE_GROUP) \
-	--name my-container-app \
+	--name $(CONTAINERAPPS_NAME) \
 	-o json
+
+rev-list:		## show details of a containerapp's revision
+	az containerapp revision list \
+	--resource-group $(RESOURCE_GROUP) \
+	--name $(CONTAINERAPPS_NAME) \
+	-o json
+
 
 app-fqdn:		## show container apps fqdn
 	@echo $(APP_FQDN)
@@ -99,9 +58,42 @@ app-curl:		## curl container apps
 app-delete:		## delete container apps
 	az containerapp delete \
 	--resource-group $(RESOURCE_GROUP) \
-	--name my-container-app \
+	--name $(CONTAINERAPPS_NAME) \
 	-o table
 
 build:			## build application
 	cd app; $(MAKE) CR_NAME=$(CR_NAME) CR_USER=$(CR_USER) IMAGE_NAME=$(IMAGE_NAME) TAG=$(TAG) build push
+
+.PHONY: deploy
+deploy:
+	az deployment group create -g $(RESOURCE_GROUP) -f ./deploy/main.bicep \
+	-p \
+	environmentName=$(CONTAINERAPPS_ENVIRONMENT) \
+	containerAppName=$(CONTAINERAPPS_NAME) \
+	containerImage=$(IMAGE_NAME):$(TAG) \
+	containerPort=8088 \
+	containerRegistry=$(CR_NAME) \
+	containerRegistryUsername=$(CR_USER) \
+	containerRegistryPassword=$${CR_PAT} \
+	minReplicas=$(MIN_REPLICAS) \
+	isExternalIngress=true \
+	-o table
+
+app-deploy:
+	az deployment group create -g $(RESOURCE_GROUP) -f ./deploy/container.bicep \
+	-p \
+	containerAppName=$(CONTAINERAPPS_NAME) \
+	containerImage=$(IMAGE_NAME):$(TAG) \
+	containerPort=8088 \
+	containerRegistry=$(CR_NAME) \
+	containerRegistryUsername=$(CR_USER) \
+	containerRegistryPassword=$${CR_PAT} \
+	minReplicas=$(MIN_REPLICAS) \
+	isExternalIngress=true \
+	-o table
+
+clean:
+	az group delete \
+	--name $(RESOURCE_GROUP) \
+	--location "$(LOCATION)"
 

@@ -44,18 +44,19 @@ export CR_USER=<your github account name>
 make setup
 ```
 
-`container apps` の作成。初回は、`containerapps` リソースを作る。リソースには、docker imageが必要なので、ビルド、プッシュして、リソース作成の順で実行する。
+`container apps` の作成。`deploy/main.bicep` は、必要なリソース一式を作成する。デプロイには、docker imageが必要なので、ビルド、プッシュして、main.bicep deployの順で実行する。
 
 ```sh
-make build app-create
+make build deploy
 ```
 
-更新、コードを修正したら、新しいイメージをプッシュして、`containerapps` リソースを更新する。
+更新、コードを修正したら、新しいイメージをプッシュして、app-deployで`containerapps` リソースを更新する。
 
 ```sh
-make build app-update
+make build app-deploy
 ```
 
 ## TODO
 
 説明を追加する
+

@@ -10,11 +10,11 @@ RUN go mod download
 
 COPY ./app/*.go ./
 
-RUN go build -o golang-gin01
+RUN go build -o server
 
 FROM alpine:3.14
 RUN apk --no-cache add ca-certificates
 WORKDIR /app
-COPY --from=builder /app/golang-gin01 ./
+COPY --from=builder /app/server ./
 
-CMD [ "./golang-gin01" ]
+CMD [ "./server" ]
