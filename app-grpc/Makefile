@@ -19,11 +19,11 @@ cover:		## Coverage
 	go test -cover takekazu.omi/golang-gin01
 
 build:		## build docker image
-	cd .. && \
 	docker build \
 		-t $(IMAGE_NAME):$(TAG) \
 		-t $(IMAGE_NAME):latest \
-		-f ./app/Dockerfile .
+		-v $${PWD}/..:/app
+		-f Dockerfile .
 
 push:		## push to container registry
 push:	build

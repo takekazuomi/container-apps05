@@ -3,10 +3,7 @@
 {
 	"name": "container-apps05",
   "build": {
-		"dockerfile": "Dockerfile",
-		"args": {
-			"INSTALL_AZURE_CLI": "true"
-		}
+		"dockerfile": "Dockerfile"
 	},
 	"runArgs": ["--init", "--privileged"],
 	"mounts": ["source=dind-var-lib-docker,target=/var/lib/docker,type=volume"],
@@ -21,6 +18,9 @@
 	// Set *default* container specific settings.json values on container create.
 	"settings": {
 		"terminal.integrated.defaultProfile.linux":"zsh",
+    "gopls": {
+			"experimentalWorkspaceModule": true
+		},
 		"go.coverOnSave": true,
 	    "go.coverageDecorator": {
         	"type": "gutter",
@@ -53,7 +53,5 @@
 	// Comment out connect as root instead. More info: https://aka.ms/vscode-remote/containers/non-root.
 	"remoteUser": "vscode",
 	"features": {
-		"git": "latest",
-		"github-cli": "latest"
 	}
 }

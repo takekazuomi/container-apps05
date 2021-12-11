@@ -1,18 +1,18 @@
 # syntax=docker/dockerfile:1
 
-FROM golang:1.17-alpine as builder
+FROM golang:1.17-alpine3.14 as builder
 
 WORKDIR /app
 
-COPY go.mod ./
-COPY go.sum ./
+COPY ./go.mod ./
+COPY ./go.sum ./
 RUN go mod download
 
-COPY *.go ./
+COPY ./app/*.go ./
 
 RUN go build -o server
 
-FROM alpine:latest
+FROM alpine:3.14
 RUN apk --no-cache add ca-certificates
 WORKDIR /app
 COPY --from=builder /app/server ./
