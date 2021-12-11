@@ -3,10 +3,7 @@
 {
 	"name": "container-apps05",
   "build": {
-		"dockerfile": "Dockerfile",
-		"args": {
-			"INSTALL_AZURE_CLI": "true"
-		}
+		"dockerfile": "Dockerfile"
 	},
 	"runArgs": ["--init", "--privileged"],
 	"mounts": ["source=dind-var-lib-docker,target=/var/lib/docker,type=volume"],
@@ -56,7 +53,5 @@
 	// Comment out connect as root instead. More info: https://aka.ms/vscode-remote/containers/non-root.
 	"remoteUser": "vscode",
 	"features": {
-		"git": "latest",
-		"github-cli": "latest"
 	}
 }
