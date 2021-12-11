@@ -22,7 +22,8 @@ GitHubの自分のアカウントのPackagesを使うには下記の設定をす
 VSCodeのdevcontainerで開いて、Makefileがあるディレクトリでターミナルを開く。設定ができていれば、下記コマンドで、イメージがビルドされてpushされる。
 
 ```sh
-make gh-login build push
+cd app
+make ghcr-login build push
 ```
 
 ## 7. deploy to azure container apps
